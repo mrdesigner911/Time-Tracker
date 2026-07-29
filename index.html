@@ -17,21 +17,21 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen pb-20 selection:bg-indigo-100 selection:text-indigo-700">
 
-  <!-- Main Container -->
+  <!-- App Wrapper -->
   <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl flex flex-col relative">
 
-    <!-- Top Navigation Header -->
+    <!-- Top Header -->
     <header class="bg-white border-b border-slate-100 sticky top-0 z-30 px-5 py-4 flex justify-between items-center">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-extrabold text-xl shadow-md shadow-indigo-200">
           <i data-lucide="timer" class="w-5 h-5"></i>
         </div>
         <div>
-          <h1 class="text-base font-bold text-slate-900 tracking-tight leading-none">Chronos</h1>
-          <p id="header-user-name" class="text-xs text-slate-400 mt-0.5">Guest User</p>
+          <h1 class="text-base font-bold text-slate-900 tracking-tight leading-none">Time Tracker</h1>
+          <p id="header-user-name" class="text-xs text-slate-400 mt-0.5">Alex Morgan</p>
         </div>
       </div>
-      <button onclick="toggleQuickNotifications()" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition relative">
+      <button onclick="alert('All systems active & synced!')" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition relative">
         <i data-lucide="bell" class="w-4 h-4"></i>
         <span class="w-2 h-2 rounded-full bg-indigo-600 absolute top-2 right-2"></span>
       </button>
@@ -52,23 +52,23 @@
             <span id="current-shift-status" class="text-xs text-slate-300 font-medium">Off Duty</span>
           </div>
           <div class="text-center my-2">
-            <div id="clock-display" class="text-4xl font-extrabold tracking-tight font-mono text-white">10:00:00 AM</div>
-            <p id="date-display" class="text-xs text-indigo-200/80 mt-1">Wednesday, Jul 29, 2026</p>
+            <div id="clock-display" class="text-4xl font-extrabold tracking-tight font-mono text-white">00:00:00 AM</div>
+            <p id="date-display" class="text-xs text-indigo-200/80 mt-1">Loading Date...</p>
           </div>
         </div>
 
-        <!-- Quick Status & Actions -->
+        <!-- Checkin / Checkout Actions -->
         <div class="glass-card rounded-3xl p-5 shadow-sm space-y-4">
           <div class="flex items-center justify-between text-xs text-slate-500 font-medium pb-2 border-b border-slate-100">
             <span>Shift Target: 10:00 AM - 7:00 PM</span>
-            <span class="text-indigo-600 font-semibold">Break: 1h Auto</span>
+            <span class="text-indigo-600 font-semibold">Break: 1h Auto (1:00-2:00)</span>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
-            <button id="btn-checkin" onclick="handleCheckIn()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 transition">
+            <button id="btn-checkin" onclick="handleCheckIn()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 transition">
               <i data-lucide="arrow-down-right" class="w-4 h-4"></i> Check In
             </button>
-            <button id="btn-checkout" onclick="handleCheckOut()" class="bg-rose-600 hover:bg-rose-700 active:scale-98 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-rose-200 transition opacity-50 cursor-not-allowed" disabled>
+            <button id="btn-checkout" onclick="handleCheckOut()" class="bg-rose-600 hover:bg-rose-700 active:scale-95 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-rose-200 transition opacity-50 cursor-not-allowed" disabled>
               <i data-lucide="arrow-up-right" class="w-4 h-4"></i> Check Out
             </button>
           </div>
@@ -78,7 +78,7 @@
           </button>
         </div>
 
-        <!-- Today's Summary Card -->
+        <!-- Today Summary -->
         <div class="bg-indigo-600 text-white rounded-3xl p-5 shadow-lg shadow-indigo-100 flex items-center justify-between">
           <div>
             <div class="text-xs text-indigo-200 font-medium">Today's Net Work Hours</div>
@@ -96,7 +96,7 @@
         <div class="flex justify-between items-center">
           <div>
             <h2 class="text-lg font-bold text-slate-900">Work Logs</h2>
-            <p class="text-xs text-slate-400">View, edit, or remove entries</p>
+            <p class="text-xs text-slate-400">View, edit, or remove entries with reason</p>
           </div>
           <button onclick="switchTab('analytics')" class="text-xs text-indigo-600 font-semibold flex items-center gap-1 hover:underline">
             <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Reports
@@ -110,7 +110,6 @@
           <button onclick="filterLogs('monthly')" id="flt-monthly" class="flex-1 py-2 rounded-xl">This Month</button>
         </div>
 
-        <!-- Logs Container -->
         <div id="history-container" class="space-y-3">
           <!-- Dynamically populated -->
         </div>
@@ -121,14 +120,13 @@
         <div class="flex justify-between items-center">
           <div>
             <h2 class="text-lg font-bold text-slate-900">Analytics & Reports</h2>
-            <p class="text-xs text-slate-400">Export data & check audit trail</p>
+            <p class="text-xs text-slate-400">Export CSV & audit trail of changes</p>
           </div>
           <button onclick="exportCSV()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md">
             <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
           </button>
         </div>
 
-        <!-- Summary Metric Cards -->
         <div class="grid grid-cols-3 gap-3">
           <div class="bg-white border border-slate-100 p-3.5 rounded-2xl shadow-sm text-center">
             <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Total Work</span>
@@ -147,7 +145,7 @@
         <!-- Audit Log History -->
         <div class="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm space-y-3">
           <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-500"></i> Modification & Deletion Audit Trail
+            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-500"></i> Modification & Deletion Reason Tags
           </h3>
           <div id="audit-trail-container" class="space-y-2 text-xs">
             <p class="text-slate-400 text-center py-4">No deletions or modifications recorded yet.</p>
@@ -159,13 +157,12 @@
       <section id="tab-settings" class="tab-content space-y-5">
         <div>
           <h2 class="text-lg font-bold text-slate-900">Account & Settings</h2>
-          <p class="text-xs text-slate-400">Manage your profile and shift preferences</p>
+          <p class="text-xs text-slate-400">Manage profile and shift preferences</p>
         </div>
 
-        <!-- Profile Settings Card -->
         <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm space-y-4">
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="user" class="w-4 h-4 text-indigo-600"></i> Profile Details
+            <i data-lucide="user" class="w-4 h-4 text-indigo-600"></i> User Profile
           </h3>
           
           <div class="space-y-3 text-xs">
@@ -182,25 +179,8 @@
               <input type="password" id="setting-password" value="••••••••••••" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <button onclick="saveProfileSettings()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition shadow-md shadow-indigo-100">
-              Update Profile
+              Update Profile Details
             </button>
-          </div>
-        </div>
-
-        <!-- Shift Rule Preferences -->
-        <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm space-y-4">
-          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="sliders" class="w-4 h-4 text-indigo-600"></i> Shift Rules Configuration
-          </h3>
-          <div class="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <label class="block font-semibold text-slate-600 mb-1">Shift Start Time</label>
-              <input type="time" id="cfg-start" value="10:00" class="w-full border rounded-xl p-2 text-sm">
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-600 mb-1">Late Threshold</label>
-              <input type="time" id="cfg-late" value="10:30" class="w-full border rounded-xl p-2 text-sm">
-            </div>
           </div>
         </div>
       </section>
@@ -224,12 +204,12 @@
     </nav>
   </div>
 
-  <!-- EDIT / REASON MODAL -->
+  <!-- MODAL: EDIT & DELETE REASON MODAL -->
   <div id="modal-action" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl space-y-4">
       <h3 id="modal-title" class="font-bold text-slate-900 text-base">Modify Record</h3>
       <input type="hidden" id="modal-log-id">
-      <input type="hidden" id="modal-mode"> <!-- 'edit' or 'delete' -->
+      <input type="hidden" id="modal-mode">
 
       <div id="modal-edit-fields" class="space-y-3">
         <div>
@@ -245,13 +225,13 @@
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Reason for Modification / Deletion *</label>
         <select id="modal-reason-preset" class="w-full border rounded-xl p-2.5 text-xs font-medium text-slate-700 mb-2">
-          <option value="Accidental Check-in">Accidental Check-in</option>
-          <option value="Early Checkout Mistake">Early Checkout Mistake</option>
-          <option value="Forgot to Check Out">Forgot to Check Out</option>
+          <option value="Accidental Check-in (Galti se checkin hua)">Accidental Check-in (Galti se checkin hua)</option>
+          <option value="Early Checkout Mistake (Galti se jaldi checkout hua)">Early Checkout Mistake (Galti se jaldi checkout hua)</option>
+          <option value="Forgot to Check Out (Checkout krna bhol gya)">Forgot to Check Out (Checkout krna bhol gya)</option>
           <option value="Late Check-in Correction">Late Check-in Correction</option>
-          <option value="Other / Manual Adjustment">Other / Manual Adjustment</option>
+          <option value="Other Manual Override">Other Manual Override</option>
         </select>
-        <textarea id="modal-reason-text" rows="2" placeholder="Provide extra details..." class="w-full border rounded-xl p-2.5 text-xs"></textarea>
+        <textarea id="modal-reason-text" rows="2" placeholder="Additional details..." class="w-full border rounded-xl p-2.5 text-xs"></textarea>
       </div>
 
       <div class="flex gap-2 pt-2">
@@ -262,8 +242,7 @@
   </div>
 
   <script>
-    // State Variables
-    let currentTab = 'dashboard';
+    // System State
     let activeLog = null;
     let timeLogs = [
       { id: '1', checkIn: '2026-07-28T10:15:00.000Z', checkOut: '2026-07-28T19:00:00.000Z', breakMins: 60 },
@@ -276,6 +255,7 @@
     setInterval(() => {
       const now = new Date();
       document.getElementById('clock-display').innerText = now.toLocaleTimeString();
+      document.getElementById('date-display').innerText = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
     }, 1000);
 
     // Tab Navigation
@@ -285,19 +265,17 @@
 
       document.getElementById(`tab-${tabId}`).classList.add('active');
       document.getElementById(`nav-${tabId}`).classList.add('active');
-      currentTab = tabId;
 
       if (tabId === 'history') renderHistory();
       if (tabId === 'analytics') renderAnalytics();
       lucide.createIcons();
     }
 
-    // Work Metrics Logic
+    // Rules logic: 10:30 AM Late, >8h Extra
     function computeMetrics(inTime, outTime, breakMins = 60) {
       const inDate = new Date(inTime);
       const outDate = outTime ? new Date(outTime) : null;
 
-      // Late rule: After 10:30 AM
       const lateLimit = new Date(inDate);
       lateLimit.setHours(10, 30, 0, 0);
       const isLate = inDate > lateLimit;
@@ -315,7 +293,7 @@
       return { isLate, netHours, isExtra };
     }
 
-    // Check-in / Out Actions
+    // Check In & Out Operations
     function handleCheckIn() {
       const now = new Date();
       activeLog = {
@@ -356,7 +334,6 @@
         shiftStatus.className = "text-xs text-slate-300 font-medium";
       }
 
-      // Today stats
       if (timeLogs.length > 0) {
         const latest = timeLogs[0];
         const m = computeMetrics(latest.checkIn, latest.checkOut, latest.breakMins);
@@ -370,13 +347,12 @@
       }
     }
 
-    // Biometric Trigger Simulation
     function triggerBiometric() {
       alert("Biometric Fingerprint scanned successfully!");
       if (!activeLog) handleCheckIn(); else handleCheckOut();
     }
 
-    // History & Filtering
+    // History & Filter
     function filterLogs(type) {
       currentFilterType = type;
       ['all', 'weekly', 'monthly'].forEach(f => {
@@ -424,7 +400,7 @@
       });
     }
 
-    // Modal Operations (Editing / Deletion with Tagged Reason)
+    // Modal with Reason Tagging
     function openModal(mode, logId) {
       document.getElementById('modal-log-id').value = logId;
       document.getElementById('modal-mode').value = mode;
@@ -522,17 +498,15 @@
     }
 
     function exportCSV() {
-      let csv = "Date,CheckIn,CheckOut,NetHours,LateStatus
-";
+      let csv = "Date,CheckIn,CheckOut,NetHours,LateStatus\n";
       timeLogs.forEach(l => {
         const m = computeMetrics(l.checkIn, l.checkOut, l.breakMins);
-        csv += `"${l.checkIn.split('T')[0]}","${l.checkIn}","${l.checkOut || ''}",${m.netHours},"${m.isLate ? 'Late' : 'OnTime'}"
-`;
+        csv += `"${l.checkIn.split('T')[0]}","${l.checkIn}","${l.checkOut || ''}",${m.netHours},"${m.isLate ? 'Late' : 'OnTime'}"\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `Work_Report_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `Attendance_Report_${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
     }
 
@@ -542,7 +516,7 @@
       alert("Profile updated successfully!");
     }
 
-    // Init
+    // Initialize App
     lucide.createIcons();
     updateDashboardUI();
   </script>
