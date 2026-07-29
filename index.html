@@ -126,7 +126,8 @@
           </div>
 
           <div class="text-center my-3">
-            <div id="clock-display" class="text-4xl font-extrabold tracking-tight font-mono text-white">00:00:00 AM</div>
+            <!-- 12-Hour AM/PM Clock Display -->
+            <div id="clock-display" class="text-3xl font-extrabold tracking-tight font-mono text-white">00:00:00 AM</div>
             <p id="date-display" class="text-xs text-slate-300 mt-1">Wednesday, July 29</p>
           </div>
 
@@ -363,6 +364,7 @@
       lucide.createIcons();
       updateGreeting();
       setInterval(updateClock, 1000);
+      updateClock();
 
       if (currentUser) {
         document.getElementById('auth-modal').classList.add('hidden');
@@ -469,9 +471,16 @@
       document.getElementById('greeting-text').innerText = greeting;
     }
 
+    // UPDATED: Standard 12-Hour AM/PM Clock Format
     function updateClock() {
       const now = new Date();
-      document.getElementById('clock-display').innerText = now.toLocaleTimeString();
+      const timeString = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+      document.getElementById('clock-display').innerText = timeString;
       document.getElementById('date-display').innerText = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
     }
 
@@ -632,8 +641,8 @@
 
       if (log) {
         const m = computeMetrics(log);
-        const inStr = m.inDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const outStr = m.outDate ? m.outDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'In Progress';
+        const inStr = m.inDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        const outStr = m.outDate ? m.outDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'In Progress';
         document.getElementById('sel-day-times').innerText = `In: ${inStr} | Out: ${outStr}`;
         document.getElementById('sel-day-hours').innerText = `${m.netHours} hrs`;
       } else {
@@ -655,8 +664,8 @@
       timeLogs.forEach(log => {
         const m = computeMetrics(log);
         const dateStr = m.inDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        const inStr = m.inDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const outStr = m.outDate ? m.outDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active';
+        const inStr = m.inDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        const outStr = m.outDate ? m.outDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Active';
 
         const card = document.createElement('div');
         card.className = "ios-glass rounded-2xl p-3.5 border border-white/60 shadow-xs flex justify-between items-center";
@@ -728,8 +737,8 @@
           extraHrs += m.extraHours;
 
           const dateStr = m.inDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          const inStr = m.inDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          const outStr = m.outDate ? m.outDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--';
+          const inStr = m.inDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+          const outStr = m.outDate ? m.outDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : '--';
 
           tbody.innerHTML += `
             <div class="flex justify-between border-b border-slate-100 pb-1">
