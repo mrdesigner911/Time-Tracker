@@ -3,262 +3,773 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Time Tracker - Modern Work Hour Log</title>
+  <title>iTime Tracker - Work Hour Log</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- html2pdf for PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Google Font (Plus Jakarta Sans) -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            ios: {
+              bg: '#F2F2F7',
+              card: 'rgba(255, 255, 255, 0.82)',
+              blue: '#007AFF',
+              green: '#34C759',
+              red: '#FF3B30',
+              orange: '#FF9500',
+              gray: '#8E8E93',
+              gray6: '#E5E5EA',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #F2F2F7;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ios-glass {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .nav-tab.active { color: #4f46e5; border-bottom: 2px solid #4f46e5; }
-    .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
+    .nav-tab.active { color: #007AFF; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-20 selection:bg-indigo-100 selection:text-indigo-700">
+<body class="text-slate-900 min-h-screen pb-20 select-none">
 
-  <!-- App Wrapper -->
-  <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl flex flex-col relative">
+  <!-- AUTH OVERLAY (Login / Signup) -->
+  <div id="auth-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="ios-glass w-full max-w-sm rounded-[32px] p-6 shadow-2xl border border-white/60 space-y-5">
+      <div class="text-center space-y-1">
+        <div class="w-14 h-14 bg-ios-blue text-white rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-ios-blue/30 mb-2">
+          <i data-lucide="timer" class="w-8 h-8"></i>
+        </div>
+        <h2 id="auth-title" class="text-xl font-bold tracking-tight text-slate-900">Welcome Back</h2>
+        <p id="auth-subtitle" class="text-xs text-ios-gray">Sign in to track your monthly hours</p>
+      </div>
 
-    <!-- Top Header -->
-    <header class="bg-white border-b border-slate-100 sticky top-0 z-30 px-5 py-4 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-extrabold text-xl shadow-md shadow-indigo-200">
-          <i data-lucide="timer" class="w-5 h-5"></i>
+      <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-3">
+        <div id="auth-name-container" class="hidden">
+          <input type="text" id="auth-name" placeholder="Full Name" class="w-full bg-white/70 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ios-blue">
         </div>
         <div>
-          <h1 class="text-base font-bold text-slate-900 tracking-tight leading-none">Time Tracker</h1>
-          <p id="header-user-name" class="text-xs text-slate-400 mt-0.5">Alex Morgan</p>
+          <input type="email" id="auth-email" placeholder="Email Address" required class="w-full bg-white/70 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ios-blue">
         </div>
+        <div>
+          <input type="password" id="auth-password" placeholder="Password" required class="w-full bg-white/70 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ios-blue">
+        </div>
+
+        <button type="submit" id="auth-submit-btn" class="w-full bg-ios-blue hover:bg-blue-600 text-white font-semibold py-3.5 rounded-2xl transition shadow-lg shadow-ios-blue/25 text-sm">
+          Sign In
+        </button>
+      </form>
+
+      <div class="text-center pt-2">
+        <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-xs font-semibold text-ios-blue hover:underline">
+          Don't have an account? Sign Up
+        </button>
       </div>
-      <button onclick="alert('All systems active & synced!')" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition relative">
-        <i data-lucide="bell" class="w-4 h-4"></i>
-        <span class="w-2 h-2 rounded-full bg-indigo-600 absolute top-2 right-2"></span>
-      </button>
+    </div>
+  </div>
+
+  <!-- MAIN APP WRAPPER -->
+  <div id="app" class="max-w-md mx-auto min-h-screen bg-[#F2F2F7] flex flex-col relative shadow-2xl">
+
+    <!-- iOS Top Navigation Header -->
+    <header class="sticky top-0 z-30 ios-glass px-5 py-3.5 flex justify-between items-center border-b border-slate-200/50">
+      <div>
+        <p id="greeting-text" class="text-[11px] font-semibold text-ios-gray uppercase tracking-wider">Good Morning</p>
+        <h1 id="user-display-name" class="text-lg font-bold text-slate-900 leading-tight">Alex Morgan</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="logout()" class="w-9 h-9 rounded-full bg-white/80 border border-slate-200/60 text-ios-gray flex items-center justify-center hover:text-ios-red transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
     </header>
 
-    <!-- Main Content Area with Clean Tabs -->
-    <main class="flex-1 p-5 pb-24 overflow-y-auto">
+    <!-- MAIN SCROLLABLE CONTENT -->
+    <main class="flex-1 p-4 space-y-4 pb-28 overflow-y-auto">
 
       <!-- TAB 1: DASHBOARD -->
-      <section id="tab-dashboard" class="tab-content active space-y-5">
-        <!-- Live Clock Banner -->
-        <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-3xl shadow-xl shadow-slate-200 relative overflow-hidden">
-          <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl"></div>
-          <div class="flex justify-between items-start mb-4">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-white/10 backdrop-blur-md text-indigo-200">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live Tracker
+      <section id="tab-dashboard" class="tab-content active space-y-4">
+        
+        <!-- Live Clock & Status Card -->
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-[28px] shadow-xl relative overflow-hidden">
+          <div class="flex justify-between items-center mb-3">
+            <span id="shift-status-pill" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-white/10 backdrop-blur-md text-emerald-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Shift
             </span>
-            <span id="current-shift-status" class="text-xs text-slate-300 font-medium">Off Duty</span>
+            <span id="current-month-badge" class="text-xs font-medium text-slate-300">July 2026</span>
           </div>
-          <div class="text-center my-2">
+
+          <div class="text-center my-3">
             <div id="clock-display" class="text-4xl font-extrabold tracking-tight font-mono text-white">00:00:00 AM</div>
-            <p id="date-display" class="text-xs text-indigo-200/80 mt-1">Loading Date...</p>
-          </div>
-        </div>
-
-        <!-- Checkin / Checkout Actions -->
-        <div class="glass-card rounded-3xl p-5 shadow-sm space-y-4">
-          <div class="flex items-center justify-between text-xs text-slate-500 font-medium pb-2 border-b border-slate-100">
-            <span>Shift Target: 10:00 AM - 7:00 PM</span>
-            <span class="text-indigo-600 font-semibold">Break: 1h Auto (1:00-2:00)</span>
+            <p id="date-display" class="text-xs text-slate-300 mt-1">Wednesday, July 29</p>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <button id="btn-checkin" onclick="handleCheckIn()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 transition">
-              <i data-lucide="arrow-down-right" class="w-4 h-4"></i> Check In
+          <div class="grid grid-cols-2 gap-3 mt-4">
+            <button id="btn-checkin" onclick="handleCheckIn()" class="bg-ios-green hover:opacity-90 active:scale-95 text-white py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-ios-green/30 transition">
+              <i data-lucide="arrow-down-left" class="w-4 h-4"></i> Check In
             </button>
-            <button id="btn-checkout" onclick="handleCheckOut()" class="bg-rose-600 hover:bg-rose-700 active:scale-95 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-rose-200 transition opacity-50 cursor-not-allowed" disabled>
+            <button id="btn-checkout" onclick="handleCheckOut()" class="bg-ios-red hover:opacity-90 active:scale-95 text-white py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-ios-red/30 transition opacity-50 cursor-not-allowed" disabled>
               <i data-lucide="arrow-up-right" class="w-4 h-4"></i> Check Out
             </button>
           </div>
-
-          <button onclick="triggerBiometric()" class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 border border-slate-200/80 transition">
-            <i data-lucide="fingerprint" class="w-4 h-4 text-indigo-600"></i> Touch ID / Face ID Quick Check
-          </button>
         </div>
 
-        <!-- Today Summary -->
-        <div class="bg-indigo-600 text-white rounded-3xl p-5 shadow-lg shadow-indigo-100 flex items-center justify-between">
-          <div>
-            <div class="text-xs text-indigo-200 font-medium">Today's Net Work Hours</div>
-            <div id="today-net-hours" class="text-2xl font-extrabold mt-0.5">0.0 hrs</div>
-          </div>
-          <div class="flex gap-2">
-            <span id="badge-late" class="hidden bg-amber-400/20 text-amber-200 border border-amber-400/30 text-[11px] font-bold px-2.5 py-1 rounded-full">Late</span>
-            <span id="badge-extra" class="hidden bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 text-[11px] font-bold px-2.5 py-1 rounded-full">Extra Hours</span>
+        <!-- 4 REQUIRED MONTHLY KPI CARDS -->
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-ios-gray px-1 mb-2">Current Month Overview</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <!-- KPI 1: Late Arrivals -->
+            <div class="ios-glass rounded-[24px] p-4 border border-white/60 shadow-sm flex flex-col justify-between">
+              <div class="flex justify-between items-start">
+                <span class="text-[11px] font-semibold text-ios-gray">Late Arrivals</span>
+                <div class="w-7 h-7 rounded-full bg-ios-orange/10 text-ios-orange flex items-center justify-center">
+                  <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                </div>
+              </div>
+              <div class="mt-3">
+                <div id="kpi-late-arrivals" class="text-2xl font-extrabold text-slate-900">0</div>
+                <p class="text-[10px] text-ios-gray mt-0.5">Target: After 10:30 AM</p>
+              </div>
+            </div>
+
+            <!-- KPI 2: Extra Hours -->
+            <div class="ios-glass rounded-[24px] p-4 border border-white/60 shadow-sm flex flex-col justify-between">
+              <div class="flex justify-between items-start">
+                <span class="text-[11px] font-semibold text-ios-gray">Extra Hours</span>
+                <div class="w-7 h-7 rounded-full bg-ios-green/10 text-ios-green flex items-center justify-center">
+                  <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                </div>
+              </div>
+              <div class="mt-3">
+                <div id="kpi-extra-hours" class="text-2xl font-extrabold text-slate-900">0.0h</div>
+                <p class="text-[10px] text-ios-gray mt-0.5">Over 8h daily limit</p>
+              </div>
+            </div>
+
+            <!-- KPI 3: Avg Check-in -->
+            <div class="ios-glass rounded-[24px] p-4 border border-white/60 shadow-sm flex flex-col justify-between">
+              <div class="flex justify-between items-start">
+                <span class="text-[11px] font-semibold text-ios-gray">Avg Check-in</span>
+                <div class="w-7 h-7 rounded-full bg-ios-blue/10 text-ios-blue flex items-center justify-center">
+                  <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                </div>
+              </div>
+              <div class="mt-3">
+                <div id="kpi-avg-checkin" class="text-lg font-bold text-slate-900">--:--</div>
+                <p class="text-[10px] text-ios-gray mt-0.5">Monthly Average</p>
+              </div>
+            </div>
+
+            <!-- KPI 4: Avg Check-out -->
+            <div class="ios-glass rounded-[24px] p-4 border border-white/60 shadow-sm flex flex-col justify-between">
+              <div class="flex justify-between items-start">
+                <span class="text-[11px] font-semibold text-ios-gray">Avg Check-out</span>
+                <div class="w-7 h-7 rounded-full bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                  <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                </div>
+              </div>
+              <div class="mt-3">
+                <div id="kpi-avg-checkout" class="text-lg font-bold text-slate-900">--:--</div>
+                <p class="text-[10px] text-ios-gray mt-0.5">Monthly Average</p>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- EMBEDDED MONTHLY CALENDAR -->
+        <div class="ios-glass rounded-[28px] p-4 border border-white/60 shadow-sm space-y-3">
+          <div class="flex justify-between items-center px-1">
+            <h3 class="text-xs font-bold text-slate-900">Monthly Calendar</h3>
+            <span id="calendar-month-title" class="text-xs font-semibold text-ios-blue">July 2026</span>
+          </div>
+
+          <!-- Calendar Grid Header -->
+          <div class="grid grid-cols-7 text-center text-[10px] font-bold text-ios-gray">
+            <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+          </div>
+          <!-- Days Grid -->
+          <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-center text-xs font-medium">
+            <!-- Rendered via JS -->
+          </div>
+
+          <!-- Selected Day Details Banner -->
+          <div id="selected-day-info" class="hidden p-3 rounded-2xl bg-white/90 border border-slate-200/80 text-xs flex justify-between items-center">
+            <div>
+              <span id="sel-day-date" class="font-bold text-slate-900">Jul 29</span>
+              <p id="sel-day-times" class="text-[11px] text-ios-gray">In: 10:00 AM | Out: 07:00 PM</p>
+            </div>
+            <span id="sel-day-hours" class="font-extrabold text-ios-blue text-sm">8.0 hrs</span>
+          </div>
+        </div>
+
       </section>
 
       <!-- TAB 2: HISTORY LOGS -->
       <section id="tab-history" class="tab-content space-y-4">
-        <div class="flex justify-between items-center">
-          <div>
-            <h2 class="text-lg font-bold text-slate-900">Work Logs</h2>
-            <p class="text-xs text-slate-400">View, edit, or remove entries with reason</p>
-          </div>
-          <button onclick="switchTab('analytics')" class="text-xs text-indigo-600 font-semibold flex items-center gap-1 hover:underline">
-            <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Reports
-          </button>
-        </div>
-
-        <!-- Filter Sub-tabs -->
-        <div class="flex bg-slate-100 p-1 rounded-2xl text-xs font-semibold text-slate-500">
-          <button onclick="filterLogs('all')" id="flt-all" class="flex-1 py-2 rounded-xl bg-white text-slate-900 shadow-sm">All</button>
-          <button onclick="filterLogs('weekly')" id="flt-weekly" class="flex-1 py-2 rounded-xl">This Week</button>
-          <button onclick="filterLogs('monthly')" id="flt-monthly" class="flex-1 py-2 rounded-xl">This Month</button>
-        </div>
-
-        <div id="history-container" class="space-y-3">
-          <!-- Dynamically populated -->
-        </div>
-      </section>
-
-      <!-- TAB 3: REPORTS & AUDIT -->
-      <section id="tab-analytics" class="tab-content space-y-5">
-        <div class="flex justify-between items-center">
-          <div>
-            <h2 class="text-lg font-bold text-slate-900">Analytics & Reports</h2>
-            <p class="text-xs text-slate-400">Export CSV & audit trail of changes</p>
-          </div>
-          <button onclick="exportCSV()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
-          </button>
-        </div>
-
-        <div class="grid grid-cols-3 gap-3">
-          <div class="bg-white border border-slate-100 p-3.5 rounded-2xl shadow-sm text-center">
-            <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Total Work</span>
-            <div id="stat-total-hrs" class="text-base font-extrabold text-slate-800 mt-1">0.0h</div>
-          </div>
-          <div class="bg-white border border-slate-100 p-3.5 rounded-2xl shadow-sm text-center">
-            <span class="text-[10px] uppercase tracking-wider font-bold text-amber-500">Late Days</span>
-            <div id="stat-late-days" class="text-base font-extrabold text-amber-600 mt-1">0</div>
-          </div>
-          <div class="bg-white border border-slate-100 p-3.5 rounded-2xl shadow-sm text-center">
-            <span class="text-[10px] uppercase tracking-wider font-bold text-emerald-500">Extra Days</span>
-            <div id="stat-extra-days" class="text-base font-extrabold text-emerald-600 mt-1">0</div>
-          </div>
-        </div>
-
-        <!-- Audit Log History -->
-        <div class="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm space-y-3">
-          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-500"></i> Modification & Deletion Reason Tags
-          </h3>
-          <div id="audit-trail-container" class="space-y-2 text-xs">
-            <p class="text-slate-400 text-center py-4">No deletions or modifications recorded yet.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 4: SETTINGS PANEL -->
-      <section id="tab-settings" class="tab-content space-y-5">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">Account & Settings</h2>
-          <p class="text-xs text-slate-400">Manage profile and shift preferences</p>
+          <h2 class="text-lg font-bold text-slate-900">Work Logs History</h2>
+          <p class="text-xs text-ios-gray">Auto-purged after 12 months</p>
         </div>
 
-        <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm space-y-4">
-          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="user" class="w-4 h-4 text-indigo-600"></i> User Profile
-          </h3>
-          
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block font-semibold text-slate-600 mb-1">Full Name</label>
-              <input type="text" id="setting-name" value="Alex Morgan" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-600 mb-1">Email Address</label>
-              <input type="email" id="setting-email" value="alex.morgan@company.com" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-600 mb-1">Password</label>
-              <input type="password" id="setting-password" value="••••••••••••" class="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <button onclick="saveProfileSettings()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition shadow-md shadow-indigo-100">
-              Update Profile Details
-            </button>
+        <div id="history-logs-container" class="space-y-2">
+          <!-- Rendered via JS -->
+        </div>
+      </section>
+
+      <!-- TAB 3: MONTHLY REPORTS & SHARE/PDF -->
+      <section id="tab-reports" class="tab-content space-y-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Monthly Reports</h2>
+            <p class="text-xs text-ios-gray">Select month & export</p>
           </div>
+          <!-- Month Selector -->
+          <select id="report-month-select" onchange="renderMonthlyReport()" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-ios-blue focus:outline-none">
+            <!-- Dynamic Months -->
+          </select>
+        </div>
+
+        <!-- Printable / Exportable PDF Area -->
+        <div id="pdf-report-content" class="ios-glass rounded-[28px] p-5 border border-white/60 shadow-sm space-y-4 bg-white">
+          <div class="border-b pb-3 flex justify-between items-start">
+            <div>
+              <h3 id="pdf-user-name" class="font-extrabold text-slate-900 text-base">Alex Morgan</h3>
+              <p id="pdf-month-title" class="text-xs text-ios-gray">Monthly Attendance Log - July 2026</p>
+            </div>
+            <span class="text-[10px] bg-ios-blue/10 text-ios-blue px-2.5 py-1 rounded-full font-bold">Verified</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center py-2 bg-slate-50 rounded-2xl">
+            <div>
+              <span class="text-[10px] text-ios-gray uppercase font-bold">Total Hours</span>
+              <div id="pdf-total-hours" class="text-base font-extrabold text-slate-900">0h</div>
+            </div>
+            <div>
+              <span class="text-[10px] text-ios-gray uppercase font-bold">Late Days</span>
+              <div id="pdf-late-count" class="text-base font-extrabold text-ios-orange">0</div>
+            </div>
+            <div>
+              <span class="text-[10px] text-ios-gray uppercase font-bold">Extra Hours</span>
+              <div id="pdf-extra-hours" class="text-base font-extrabold text-ios-green">0.0h</div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold text-slate-800">Daily Breakdown</h4>
+            <div id="pdf-table-body" class="text-xs space-y-1.5 max-h-60 overflow-y-auto pr-1">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Action Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="downloadPDF()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md">
+            <i data-lucide="file-text" class="w-4 h-4"></i> Download PDF
+          </button>
+          <button onclick="shareReport()" class="bg-ios-blue hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md shadow-ios-blue/20">
+            <i data-lucide="share-2" class="w-4 h-4"></i> Share Report
+          </button>
         </div>
       </section>
 
     </main>
 
-    <!-- Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-100 px-6 py-2 flex justify-between items-center z-40">
-      <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-tab active flex flex-col items-center gap-1 text-slate-400 py-1 font-semibold text-[10px]">
-        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+    <!-- iOS Glass Tab Bar Navigation -->
+    <nav class="fixed bottom-0 max-w-md w-full ios-glass border-t border-slate-200/60 px-6 py-2.5 flex justify-between items-center z-40">
+      <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-tab active flex flex-col items-center gap-1 text-ios-gray font-semibold text-[10px]">
+        <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
       </button>
-      <button onclick="switchTab('history')" id="nav-history" class="nav-tab flex flex-col items-center gap-1 text-slate-400 py-1 font-semibold text-[10px]">
-        <i data-lucide="history" class="w-5 h-5"></i> History
+      <button onclick="switchTab('history')" id="nav-history" class="nav-tab flex flex-col items-center gap-1 text-ios-gray font-semibold text-[10px]">
+        <i data-lucide="calendar" class="w-5 h-5"></i> History
       </button>
-      <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-tab flex flex-col items-center gap-1 text-slate-400 py-1 font-semibold text-[10px]">
-        <i data-lucide="pie-chart" class="w-5 h-5"></i> Reports
-      </button>
-      <button onclick="switchTab('settings')" id="nav-settings" class="nav-tab flex flex-col items-center gap-1 text-slate-400 py-1 font-semibold text-[10px]">
-        <i data-lucide="settings" class="w-5 h-5"></i> Settings
+      <button onclick="switchTab('reports')" id="nav-reports" class="nav-tab flex flex-col items-center gap-1 text-ios-gray font-semibold text-[10px]">
+        <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Reports
       </button>
     </nav>
   </div>
 
-  <!-- MODAL: EDIT & DELETE REASON MODAL -->
-  <div id="modal-action" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl space-y-4">
-      <h3 id="modal-title" class="font-bold text-slate-900 text-base">Modify Record</h3>
+  <!-- MODAL: EDIT / DELETE WITH REASONS -->
+  <div id="modal-action" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+    <div class="ios-glass rounded-[28px] p-5 max-w-xs w-full shadow-2xl border border-white/60 space-y-4">
+      <h3 id="modal-title" class="font-bold text-slate-900 text-base">Modify Log</h3>
       <input type="hidden" id="modal-log-id">
       <input type="hidden" id="modal-mode">
 
-      <div id="modal-edit-fields" class="space-y-3">
+      <div id="modal-edit-fields" class="space-y-2">
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Check-in Time</label>
-          <input type="time" id="modal-in" class="w-full border rounded-xl p-2.5 text-sm">
+          <label class="block text-[11px] font-semibold text-ios-gray mb-1">Check-In Time</label>
+          <input type="time" id="modal-in" class="w-full bg-white/80 border rounded-xl p-2 text-xs">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Check-out Time</label>
-          <input type="time" id="modal-out" class="w-full border rounded-xl p-2.5 text-sm">
+          <label class="block text-[11px] font-semibold text-ios-gray mb-1">Check-Out Time</label>
+          <input type="time" id="modal-out" class="w-full bg-white/80 border rounded-xl p-2 text-xs">
         </div>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Reason for Modification / Deletion *</label>
-        <select id="modal-reason-preset" class="w-full border rounded-xl p-2.5 text-xs font-medium text-slate-700 mb-2">
-          <option value="Accidental Check-in (Galti se checkin hua)">Accidental Check-in (Galti se checkin hua)</option>
-          <option value="Early Checkout Mistake (Galti se jaldi checkout hua)">Early Checkout Mistake (Galti se jaldi checkout hua)</option>
-          <option value="Forgot to Check Out (Checkout krna bhol gya)">Forgot to Check Out (Checkout krna bhol gya)</option>
-          <option value="Late Check-in Correction">Late Check-in Correction</option>
-          <option value="Other Manual Override">Other Manual Override</option>
+        <label class="block text-[11px] font-bold text-slate-800 mb-1">Reason *</label>
+        <select id="modal-reason-preset" class="w-full bg-white/80 border rounded-xl p-2 text-xs text-slate-700 mb-2">
+          <option value="Accidental Check-in">Accidental Check-in</option>
+          <option value="Forgot Check-out">Forgot Check-out</option>
+          <option value="Wrong Entry Correction">Wrong Entry Correction</option>
         </select>
-        <textarea id="modal-reason-text" rows="2" placeholder="Additional details..." class="w-full border rounded-xl p-2.5 text-xs"></textarea>
       </div>
 
       <div class="flex gap-2 pt-2">
-        <button onclick="closeModal()" class="flex-1 py-2.5 text-xs font-bold border rounded-xl text-slate-600">Cancel</button>
-        <button onclick="submitModalAction()" id="modal-submit-btn" class="flex-1 py-2.5 text-xs font-bold bg-indigo-600 text-white rounded-xl shadow-md">Confirm</button>
+        <button onclick="closeModal()" class="flex-1 py-2.5 text-xs font-bold border rounded-xl text-ios-gray">Cancel</button>
+        <button onclick="submitModalAction()" id="modal-submit-btn" class="flex-1 py-2.5 text-xs font-bold bg-ios-blue text-white rounded-xl shadow-md">Save</button>
       </div>
     </div>
   </div>
 
+  <!-- JAVASCRIPT LOGIC -->
   <script>
-    // System State
+    // APP STATE
+    let currentUser = JSON.parse(localStorage.getItem('iTime_currentUser')) || null;
+    let users = JSON.parse(localStorage.getItem('iTime_users')) || [];
+    let timeLogs = [];
+    let activeAuthMode = 'login';
     let activeLog = null;
-    let timeLogs = [
-      { id: '1', checkIn: '2026-07-28T10:15:00.000Z', checkOut: '2026-07-28T19:00:00.000Z', breakMins: 60 },
-      { id: '2', checkIn: '2026-07-29T10:45:00.000Z', checkOut: '2026-07-29T19:30:00.000Z', breakMins: 60 }
-    ];
-    let auditTrail = [];
-    let currentFilterType = 'all';
 
-    // Live Clock
-    setInterval(() => {
+    // INITIALIZATION
+    window.onload = () => {
+      lucide.createIcons();
+      updateGreeting();
+      setInterval(updateClock, 1000);
+
+      if (currentUser) {
+        document.getElementById('auth-modal').classList.add('hidden');
+        loadUserData();
+      } else {
+        document.getElementById('auth-modal').classList.remove('hidden');
+      }
+    };
+
+    // 1. AUTHENTICATION SYSTEM
+    function toggleAuthMode() {
+      activeAuthMode = activeAuthMode === 'login' ? 'signup' : 'login';
+      const title = document.getElementById('auth-title');
+      const subtitle = document.getElementById('auth-subtitle');
+      const submitBtn = document.getElementById('auth-submit-btn');
+      const toggleBtn = document.getElementById('auth-toggle-btn');
+      const nameContainer = document.getElementById('auth-name-container');
+
+      if (activeAuthMode === 'signup') {
+        title.innerText = 'Create Account';
+        subtitle.innerText = 'Start tracking your monthly hours';
+        submitBtn.innerText = 'Sign Up';
+        toggleBtn.innerText = 'Already have an account? Sign In';
+        nameContainer.classList.remove('hidden');
+      } else {
+        title.innerText = 'Welcome Back';
+        subtitle.innerText = 'Sign in to track your monthly hours';
+        submitBtn.innerText = 'Sign In';
+        toggleBtn.innerText = "Don't have an account? Sign Up";
+        nameContainer.classList.add('hidden');
+      }
+    }
+
+    function handleAuth(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value.trim();
+
+      if (activeAuthMode === 'signup') {
+        const name = document.getElementById('auth-name').value.trim();
+        if (users.find(u => u.email === email)) {
+          alert("An account with this email address already exists.");
+          return;
+        }
+        const newUser = { id: 'usr_' + Date.now(), name, email, password };
+        users.push(newUser);
+        localStorage.setItem('iTime_users', JSON.stringify(users));
+        currentUser = newUser;
+      } else {
+        const existing = users.find(u => u.email === email && u.password === password);
+        if (!existing) {
+          alert("Invalid email or password!");
+          return;
+        }
+        currentUser = existing;
+      }
+
+      localStorage.setItem('iTime_currentUser', JSON.stringify(currentUser));
+      document.getElementById('auth-modal').classList.add('hidden');
+      loadUserData();
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('iTime_currentUser');
+      location.reload();
+    }
+
+    function loadUserData() {
+      document.getElementById('user-display-name').innerText = currentUser.name || "Alex Morgan";
+      document.getElementById('pdf-user-name').innerText = currentUser.name || "Alex Morgan";
+      
+      const rawLogs = localStorage.getItem(`iTime_logs_${currentUser.id}`);
+      timeLogs = rawLogs ? JSON.parse(rawLogs) : getMockData();
+
+      purgeOldData();
+
+      activeLog = timeLogs.find(l => !l.checkOut) || null;
+
+      saveLogs();
+      updateDashboardUI();
+      renderCalendar();
+      populateReportMonthSelector();
+    }
+
+    function saveLogs() {
+      localStorage.setItem(`iTime_logs_${currentUser.id}`, JSON.stringify(timeLogs));
+    }
+
+    // AUTO PURGE DATA OLDER THAN 12 MONTHS
+    function purgeOldData() {
+      const twelveMonthsAgo = new Date();
+      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+      timeLogs = timeLogs.filter(log => new Date(log.checkIn) >= twelveMonthsAgo);
+    }
+
+    // 2. TIME & GREETINGS
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      let greeting = "Good Morning";
+      if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
+      else if (hour >= 17) greeting = "Good Evening";
+      document.getElementById('greeting-text').innerText = greeting;
+    }
+
+    function updateClock() {
       const now = new Date();
       document.getElementById('clock-display').innerText = now.toLocaleTimeString();
-      document.getElementById('date-display').innerText = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-    }, 1000);
+      document.getElementById('date-display').innerText = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    }
 
-    // Tab Navigation
+    // 3. SHIFT CHECK-IN / CHECK-OUT
+    function handleCheckIn() {
+      activeLog = {
+        id: 'log_' + Date.now(),
+        checkIn: new Date().toISOString(),
+        checkOut: null,
+        breakMins: 60
+      };
+      timeLogs.unshift(activeLog);
+      saveLogs();
+      updateDashboardUI();
+      renderCalendar();
+    }
+
+    function handleCheckOut() {
+      if (!activeLog) return;
+      activeLog.checkOut = new Date().toISOString();
+      activeLog = null;
+      saveLogs();
+      updateDashboardUI();
+      renderCalendar();
+    }
+
+    // 4. METRICS & KPI CALCULATIONS (CURRENT MONTH)
+    function computeMetrics(log) {
+      const inDate = new Date(log.checkIn);
+      const outDate = log.checkOut ? new Date(log.checkOut) : null;
+
+      const lateLimit = new Date(inDate);
+      lateLimit.setHours(10, 30, 0, 0);
+      const isLate = inDate > lateLimit;
+
+      let netHours = 0;
+      let extraHours = 0;
+
+      if (outDate) {
+        let diffMs = outDate - inDate;
+        let mins = Math.max(0, (diffMs / (1000 * 60)) - (log.breakMins || 60));
+        netHours = parseFloat((mins / 60).toFixed(2));
+        if (netHours > 8) extraHours = parseFloat((netHours - 8).toFixed(2));
+      }
+
+      return { isLate, netHours, extraHours, inDate, outDate };
+    }
+
+    function updateDashboardUI() {
+      const btnIn = document.getElementById('btn-checkin');
+      const btnOut = document.getElementById('btn-checkout');
+      const pill = document.getElementById('shift-status-pill');
+
+      if (activeLog) {
+        btnIn.disabled = true;
+        btnIn.classList.add('opacity-50', 'cursor-not-allowed');
+        btnOut.disabled = false;
+        btnOut.classList.remove('opacity-50', 'cursor-not-allowed');
+        pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Shift`;
+      } else {
+        btnIn.disabled = false;
+        btnIn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btnOut.disabled = true;
+        btnOut.classList.add('opacity-50', 'cursor-not-allowed');
+        pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-ios-gray"></span> Off Duty`;
+      }
+
+      const now = new Date();
+      const currentMonthLogs = timeLogs.filter(l => {
+        const d = new Date(l.checkIn);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+
+      let lateCount = 0;
+      let totalExtra = 0;
+      let checkInMinsSum = 0;
+      let checkOutMinsSum = 0;
+      let validOutCount = 0;
+
+      currentMonthLogs.forEach(log => {
+        const m = computeMetrics(log);
+        if (m.isLate) lateCount++;
+        totalExtra += m.extraHours;
+
+        checkInMinsSum += (m.inDate.getHours() * 60) + m.inDate.getMinutes();
+
+        if (m.outDate) {
+          checkOutMinsSum += (m.outDate.getHours() * 60) + m.outDate.getMinutes();
+          validOutCount++;
+        }
+      });
+
+      document.getElementById('kpi-late-arrivals').innerText = lateCount;
+      document.getElementById('kpi-extra-hours').innerText = totalExtra.toFixed(1) + 'h';
+
+      if (currentMonthLogs.length > 0) {
+        const avgInMins = Math.round(checkInMinsSum / currentMonthLogs.length);
+        document.getElementById('kpi-avg-checkin').innerText = formatMinsToTime(avgInMins);
+      } else {
+        document.getElementById('kpi-avg-checkin').innerText = '--:--';
+      }
+
+      if (validOutCount > 0) {
+        const avgOutMins = Math.round(checkOutMinsSum / validOutCount);
+        document.getElementById('kpi-avg-checkout').innerText = formatMinsToTime(avgOutMins);
+      } else {
+        document.getElementById('kpi-avg-checkout').innerText = '--:--';
+      }
+    }
+
+    function formatMinsToTime(totalMins) {
+      let hrs = Math.floor(totalMins / 60);
+      let mins = totalMins % 60;
+      let ampm = hrs >= 12 ? 'PM' : 'AM';
+      hrs = hrs % 12 || 12;
+      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')} ${ampm}`;
+    }
+
+    // 5. CALENDAR EMBEDDED
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-days-grid');
+      grid.innerHTML = '';
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDayIndex; i++) {
+        grid.innerHTML += `<div></div>`;
+      }
+
+      for (let d = 1; d <= totalDays; d++) {
+        const dateKey = `${year}-${(month + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+        const hasLog = timeLogs.find(l => l.checkIn.startsWith(dateKey));
+
+        const isToday = d === now.getDate();
+        let bgClass = isToday ? 'bg-ios-blue text-white font-bold' : 'bg-white/60 text-slate-800 hover:bg-white';
+
+        grid.innerHTML += `
+          <button onclick="selectCalendarDate('${dateKey}')" class="h-9 rounded-xl flex flex-col items-center justify-center relative ${bgClass} shadow-xs">
+            <span>${d}</span>
+            ${hasLog ? '<span class="w-1 h-1 bg-ios-green rounded-full absolute bottom-1"></span>' : ''}
+          </button>
+        `;
+      }
+    }
+
+    function selectCalendarDate(dateKey) {
+      const log = timeLogs.find(l => l.checkIn.startsWith(dateKey));
+      const infoBox = document.getElementById('selected-day-info');
+      infoBox.classList.remove('hidden');
+
+      const dateObj = new Date(dateKey);
+      document.getElementById('sel-day-date').innerText = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      if (log) {
+        const m = computeMetrics(log);
+        const inStr = m.inDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const outStr = m.outDate ? m.outDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'In Progress';
+        document.getElementById('sel-day-times').innerText = `In: ${inStr} | Out: ${outStr}`;
+        document.getElementById('sel-day-hours').innerText = `${m.netHours} hrs`;
+      } else {
+        document.getElementById('sel-day-times').innerText = "No work record logged";
+        document.getElementById('sel-day-hours').innerText = "0.0 hrs";
+      }
+    }
+
+    // 6. HISTORY TAB
+    function renderHistory() {
+      const container = document.getElementById('history-logs-container');
+      container.innerHTML = '';
+
+      if (timeLogs.length === 0) {
+        container.innerHTML = `<p class="text-xs text-ios-gray text-center py-8">No history available.</p>`;
+        return;
+      }
+
+      timeLogs.forEach(log => {
+        const m = computeMetrics(log);
+        const dateStr = m.inDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const inStr = m.inDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const outStr = m.outDate ? m.outDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active';
+
+        const card = document.createElement('div');
+        card.className = "ios-glass rounded-2xl p-3.5 border border-white/60 shadow-xs flex justify-between items-center";
+        card.innerHTML = `
+          <div>
+            <div class="text-xs font-bold text-slate-900">${dateStr}</div>
+            <div class="text-[11px] text-ios-gray mt-0.5">${inStr} - ${outStr}</div>
+            ${m.isLate ? '<span class="inline-block mt-1 bg-ios-orange/10 text-ios-orange text-[9px] font-bold px-2 py-0.5 rounded-full">Late Arrival</span>' : ''}
+          </div>
+          <div class="text-right">
+            <div class="text-sm font-extrabold text-slate-800">${m.netHours} hrs</div>
+            <div class="flex gap-2 mt-1">
+              <button onclick="openModal('edit', '${log.id}')" class="text-[10px] text-ios-blue font-bold">Edit</button>
+              <button onclick="openModal('delete', '${log.id}')" class="text-[10px] text-ios-red font-bold">Delete</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 7. REPORTS TAB & MONTHLY SELECTOR
+    function populateReportMonthSelector() {
+      const select = document.getElementById('report-month-select');
+      select.innerHTML = '';
+
+      const months = [];
+      const now = new Date();
+
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const val = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+        const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        months.push({ val, label });
+      }
+
+      months.forEach(m => {
+        select.innerHTML += `<option value="${m.val}">${m.label}</option>`;
+      });
+
+      renderMonthlyReport();
+    }
+
+    function renderMonthlyReport() {
+      const selectedMonthVal = document.getElementById('report-month-select').value;
+      const [year, month] = selectedMonthVal.split('-').map(Number);
+
+      const filteredLogs = timeLogs.filter(l => {
+        const d = new Date(l.checkIn);
+        return d.getFullYear() === year && (d.getMonth() + 1) === month;
+      });
+
+      const monthName = new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      document.getElementById('pdf-month-title').innerText = `Monthly Attendance Log - ${monthName}`;
+
+      let totalHrs = 0;
+      let lateCnt = 0;
+      let extraHrs = 0;
+      const tbody = document.getElementById('pdf-table-body');
+      tbody.innerHTML = '';
+
+      if (filteredLogs.length === 0) {
+        tbody.innerHTML = `<p class="text-ios-gray text-center py-4">No entries recorded for this month.</p>`;
+      } else {
+        filteredLogs.forEach(l => {
+          const m = computeMetrics(l);
+          totalHrs += m.netHours;
+          if (m.isLate) lateCnt++;
+          extraHrs += m.extraHours;
+
+          const dateStr = m.inDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const inStr = m.inDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const outStr = m.outDate ? m.outDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--';
+
+          tbody.innerHTML += `
+            <div class="flex justify-between border-b border-slate-100 pb-1">
+              <span>${dateStr} (${inStr} - ${outStr})</span>
+              <span class="font-bold">${m.netHours} hrs</span>
+            </div>
+          `;
+        });
+      }
+
+      document.getElementById('pdf-total-hours').innerText = totalHrs.toFixed(1) + 'h';
+      document.getElementById('pdf-late-count').innerText = lateCnt;
+      document.getElementById('pdf-extra-hours').innerText = extraHrs.toFixed(1) + 'h';
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById('pdf-report-content');
+      const opt = {
+        margin:       0.5,
+        filename:     `Work_Report_${currentUser.name}_${Date.now()}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
+    }
+
+    function shareReport() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Work Hour Report',
+          text: `Check out my work hour report for ${document.getElementById('pdf-month-title').innerText}`,
+          url: window.location.href,
+        }).catch(console.error);
+      } else {
+        alert("Web Share API is not supported in this browser. You can download the PDF instead!");
+      }
+    }
+
+    // TAB SWITCHING
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
@@ -267,166 +778,30 @@
       document.getElementById(`nav-${tabId}`).classList.add('active');
 
       if (tabId === 'history') renderHistory();
-      if (tabId === 'analytics') renderAnalytics();
+      if (tabId === 'reports') renderMonthlyReport();
       lucide.createIcons();
     }
 
-    // Rules logic: 10:30 AM Late, >8h Extra
-    function computeMetrics(inTime, outTime, breakMins = 60) {
-      const inDate = new Date(inTime);
-      const outDate = outTime ? new Date(outTime) : null;
-
-      const lateLimit = new Date(inDate);
-      lateLimit.setHours(10, 30, 0, 0);
-      const isLate = inDate > lateLimit;
-
-      let netHours = 0;
-      let isExtra = false;
-
-      if (outDate) {
-        let diffMs = outDate - inDate;
-        let mins = Math.max(0, (diffMs / (1000 * 60)) - breakMins);
-        netHours = parseFloat((mins / 60).toFixed(2));
-        if (netHours > 8) isExtra = true;
-      }
-
-      return { isLate, netHours, isExtra };
-    }
-
-    // Check In & Out Operations
-    function handleCheckIn() {
-      const now = new Date();
-      activeLog = {
-        id: 'log_' + Date.now(),
-        checkIn: now.toISOString(),
-        checkOut: null,
-        breakMins: 60
-      };
-      timeLogs.unshift(activeLog);
-      updateDashboardUI();
-    }
-
-    function handleCheckOut() {
-      if (!activeLog) return;
-      activeLog.checkOut = new Date().toISOString();
-      activeLog = null;
-      updateDashboardUI();
-    }
-
-    function updateDashboardUI() {
-      const btnIn = document.getElementById('btn-checkin');
-      const btnOut = document.getElementById('btn-checkout');
-      const shiftStatus = document.getElementById('current-shift-status');
-
-      if (activeLog) {
-        btnIn.disabled = true;
-        btnIn.classList.add('opacity-50', 'cursor-not-allowed');
-        btnOut.disabled = false;
-        btnOut.classList.remove('opacity-50', 'cursor-not-allowed');
-        shiftStatus.innerText = "On Duty (Active)";
-        shiftStatus.className = "text-xs text-emerald-400 font-semibold";
-      } else {
-        btnIn.disabled = false;
-        btnIn.classList.remove('opacity-50', 'cursor-not-allowed');
-        btnOut.disabled = true;
-        btnOut.classList.add('opacity-50', 'cursor-not-allowed');
-        shiftStatus.innerText = "Off Duty";
-        shiftStatus.className = "text-xs text-slate-300 font-medium";
-      }
-
-      if (timeLogs.length > 0) {
-        const latest = timeLogs[0];
-        const m = computeMetrics(latest.checkIn, latest.checkOut, latest.breakMins);
-        document.getElementById('today-net-hours').innerText = m.netHours + " hrs";
-        
-        const bLate = document.getElementById('badge-late');
-        const bExtra = document.getElementById('badge-extra');
-
-        m.isLate ? bLate.classList.remove('hidden') : bLate.classList.add('hidden');
-        m.isExtra ? bExtra.classList.remove('hidden') : bExtra.classList.add('hidden');
-      }
-    }
-
-    function triggerBiometric() {
-      alert("Biometric Fingerprint scanned successfully!");
-      if (!activeLog) handleCheckIn(); else handleCheckOut();
-    }
-
-    // History & Filter
-    function filterLogs(type) {
-      currentFilterType = type;
-      ['all', 'weekly', 'monthly'].forEach(f => {
-        const btn = document.getElementById(`flt-${f}`);
-        btn.className = f === type ? "flex-1 py-2 rounded-xl bg-white text-slate-900 shadow-sm" : "flex-1 py-2 rounded-xl";
-      });
-      renderHistory();
-    }
-
-    function renderHistory() {
-      const container = document.getElementById('history-container');
-      container.innerHTML = '';
-
-      if (timeLogs.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">No logs available</p>`;
-        return;
-      }
-
-      timeLogs.forEach(log => {
-        const m = computeMetrics(log.checkIn, log.checkOut, log.breakMins);
-        const dateStr = new Date(log.checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const inStr = new Date(log.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const outStr = log.checkOut ? new Date(log.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'In Progress';
-
-        const item = document.createElement('div');
-        item.className = "bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex justify-between items-center";
-        item.innerHTML = `
-          <div>
-            <div class="text-xs font-bold text-slate-900">${dateStr}</div>
-            <div class="text-[11px] text-slate-500 mt-0.5">${inStr} - ${outStr}</div>
-            <div class="flex gap-1.5 mt-1.5">
-              ${m.isLate ? '<span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Late</span>' : ''}
-              ${m.isExtra ? '<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Extra Hours</span>' : ''}
-            </div>
-          </div>
-          <div class="text-right">
-            <div class="text-sm font-extrabold text-slate-800">${m.netHours} hrs</div>
-            <div class="flex gap-2 mt-2">
-              <button onclick="openModal('edit', '${log.id}')" class="text-[11px] text-indigo-600 font-bold hover:underline">Edit</button>
-              <button onclick="openModal('delete', '${log.id}')" class="text-[11px] text-rose-600 font-bold hover:underline">Delete</button>
-            </div>
-          </div>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    // Modal with Reason Tagging
+    // MODALS FOR EDIT/DELETE
     function openModal(mode, logId) {
       document.getElementById('modal-log-id').value = logId;
       document.getElementById('modal-mode').value = mode;
 
       const log = timeLogs.find(l => l.id === logId);
       const title = document.getElementById('modal-title');
-      const submitBtn = document.getElementById('modal-submit-btn');
       const editFields = document.getElementById('modal-edit-fields');
 
       if (mode === 'delete') {
-        title.innerText = "Delete Record";
-        submitBtn.className = "flex-1 py-2.5 text-xs font-bold bg-rose-600 text-white rounded-xl shadow-md";
-        submitBtn.innerText = "Confirm Delete";
+        title.innerText = "Delete Entry";
         editFields.classList.add('hidden');
       } else {
-        title.innerText = "Modify Record";
-        submitBtn.className = "flex-1 py-2.5 text-xs font-bold bg-indigo-600 text-white rounded-xl shadow-md";
-        submitBtn.innerText = "Save Changes";
+        title.innerText = "Edit Entry";
         editFields.classList.remove('hidden');
-
         if (log) {
           document.getElementById('modal-in').value = new Date(log.checkIn).toTimeString().substring(0, 5);
           document.getElementById('modal-out').value = log.checkOut ? new Date(log.checkOut).toTimeString().substring(0, 5) : '';
         }
       }
-
       document.getElementById('modal-action').classList.remove('hidden');
     }
 
@@ -437,14 +812,9 @@
     function submitModalAction() {
       const logId = document.getElementById('modal-log-id').value;
       const mode = document.getElementById('modal-mode').value;
-      const reasonPreset = document.getElementById('modal-reason-preset').value;
-      const reasonNotes = document.getElementById('modal-reason-text').value;
-
-      const fullReason = `${reasonPreset}${reasonNotes ? ' - ' + reasonNotes : ''}`;
 
       if (mode === 'delete') {
         timeLogs = timeLogs.filter(l => l.id !== logId);
-        auditTrail.unshift({ type: 'DELETED', logId, reason: fullReason, date: new Date().toLocaleString() });
       } else {
         const log = timeLogs.find(l => l.id === logId);
         if (log) {
@@ -453,72 +823,22 @@
           const outVal = document.getElementById('modal-out').value;
           if (inVal) log.checkIn = `${baseDate}T${inVal}:00.000Z`;
           if (outVal) log.checkOut = `${baseDate}T${outVal}:00.000Z`;
-          auditTrail.unshift({ type: 'EDITED', logId, reason: fullReason, date: new Date().toLocaleString() });
         }
       }
 
+      saveLogs();
       closeModal();
       renderHistory();
-      renderAnalytics();
       updateDashboardUI();
     }
 
-    // Reports & CSV Export
-    function renderAnalytics() {
-      let total = 0, lates = 0, extras = 0;
-      timeLogs.forEach(l => {
-        const m = computeMetrics(l.checkIn, l.checkOut, l.breakMins);
-        total += m.netHours;
-        if (m.isLate) lates++;
-        if (m.isExtra) extras++;
-      });
-
-      document.getElementById('stat-total-hrs').innerText = total.toFixed(1) + "h";
-      document.getElementById('stat-late-days').innerText = lates;
-      document.getElementById('stat-extra-days').innerText = extras;
-
-      const auditContainer = document.getElementById('audit-trail-container');
-      if (auditTrail.length === 0) {
-        auditContainer.innerHTML = `<p class="text-slate-400 text-center py-4">No modifications or deletions logged yet.</p>`;
-      } else {
-        auditContainer.innerHTML = '';
-        auditTrail.forEach(a => {
-          const el = document.createElement('div');
-          el.className = "p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex justify-between items-start";
-          el.innerHTML = `
-            <div>
-              <span class="font-bold ${a.type === 'DELETED' ? 'text-rose-600' : 'text-indigo-600'}">${a.type}</span>
-              <p class="text-slate-600 mt-0.5">Reason: "${a.reason}"</p>
-            </div>
-            <span class="text-[10px] text-slate-400">${a.date}</span>
-          `;
-          auditContainer.appendChild(el);
-        });
-      }
+    // INITIAL MOCK DATA
+    function getMockData() {
+      return [
+        { id: '1', checkIn: '2026-07-28T10:15:00.000Z', checkOut: '2026-07-28T19:00:00.000Z', breakMins: 60 },
+        { id: '2', checkIn: '2026-07-29T10:45:00.000Z', checkOut: '2026-07-29T19:30:00.000Z', breakMins: 60 }
+      ];
     }
-
-    function exportCSV() {
-      let csv = "Date,CheckIn,CheckOut,NetHours,LateStatus\n";
-      timeLogs.forEach(l => {
-        const m = computeMetrics(l.checkIn, l.checkOut, l.breakMins);
-        csv += `"${l.checkIn.split('T')[0]}","${l.checkIn}","${l.checkOut || ''}",${m.netHours},"${m.isLate ? 'Late' : 'OnTime'}"\n`;
-      });
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `Attendance_Report_${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-    }
-
-    function saveProfileSettings() {
-      const name = document.getElementById('setting-name').value;
-      document.getElementById('header-user-name').innerText = name;
-      alert("Profile updated successfully!");
-    }
-
-    // Initialize App
-    lucide.createIcons();
-    updateDashboardUI();
   </script>
 </body>
 </html>
